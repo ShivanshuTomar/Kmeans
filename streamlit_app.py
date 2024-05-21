@@ -208,3 +208,6 @@ if selected_anomalyAlgorithm == "K Means Clustering":
                 file_name='plot.html',
                 mime='text/html'
             )
+# Run the Streamlit app
+if __name__ == "__main__":
+    main()
