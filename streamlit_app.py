@@ -20,13 +20,17 @@ def apply_anomaly_detection_KMeans(data, n_clusters=8):
 
 def elbow_method(data, max_clusters=10):
     wcss = []
-    for i in range(1, max_clusters + 1):
+    for i in range(1, max_clusters + 10):
         kmeans = KMeans(n_clusters=i, random_state=42)
         kmeans.fit(data)
         wcss.append(kmeans.inertia_)
     return wcss
 
 # Streamlit application code
+st.title("Anomaly Detection with Machine Learning Algorithms")
+
+selected_anomalyAlgorithm = st.selectbox("Select Anomaly Detection Algorithm:", ["Isolation Forest", "K Means Clustering"])
+
 if selected_anomalyAlgorithm == "K Means Clustering":
     st.markdown(
         "<h2 style='font-size: 24px; color: blue;'>Upload Dataset, Empower Machine Learning Algorithms!</h2>",
@@ -208,6 +212,82 @@ if selected_anomalyAlgorithm == "K Means Clustering":
                 file_name='plot.html',
                 mime='text/html'
             )
+
+        elif selected_option == "3D ScatterPlot":
+            selected_x_col = st.selectbox("Select X-axis column", data.columns)
+            selected_y_col = st.selectbox("Select Y-axis column", data.columns)
+            selected_z_col = st.selectbox("Select Z-axis column", data.columns)
+            fig = px.scatter_3d(
+                data_with_anomalies_KMeans,
+                x=selected_x_col,
+                y=selected_y_col,
+                z=selected_z_col,
+                color="PointColor",
+                color_discrete_map={"Inlier": "blue", "Outlier": "red"},
+                title='K-Means Clustering Anomaly Detection (3D Scatter Plot)',
+                labels={selected_x_col: selected_x_col, selected_y_col: selected_y_col, selected_z_col: selected_z_col, "Anomaly_KMeans": 'Anomaly_KMeans', "PointColor": "Data Type"},
+            )
+            fig.update_traces(
+                marker=dict(size=8, opacity=0.7, line=dict(width=2, color='DarkSlateGrey')),
+                selector=dict(mode='markers+text')
+            )
+            fig.update_layout(
+                legend=dict(
+                    itemsizing='constant',
+                    title_text='',
+                    font=dict(family='Arial', size=12),
+                    borderwidth=2
+                ),
+                scene=dict(
+                    xaxis=dict(
+                        title_text=selected_x_col,
+                        title_font=dict(size=14),
+                    ),
+                    yaxis=dict(
+                        title_text=selected_y_col,
+                        title_font=dict(size=14),
+                    ),
+                    zaxis=dict(
+                        title_text=selected_z_col,
+                        title_font=dict(size=14),
+                    ),
+                ),
+                title_font=dict(size=18, family='Arial'),
+                paper_bgcolor='#F1F6F5',
+                plot_bgcolor='white',
+                margin=dict(l=80, r=80, t=50, b=80),
+            )
+            st.plotly_chart(fig)
+
+        import time
+        with st.spinner('Wait for it...'):
+            time.sleep(3)
+        st.success('Done!')
+
+        st.write("Download the data with anomaly indicator")
+        st.download_button(
+            label="Download",
+            data=final_data.to_csv(index=False),
+            file_name="KMeansAnomaly.csv",
+            mime="text/csv"
+        )
+
+        filtered_data = final_data[final_data['Anomaly_KMeans'] == 1]
+        st.write("Download the dataset where all observations are labeled as anomalies")
+        st.download_button(
+            label="Download",
+            data=filtered_data.to_csv(index=False),
+            file_name="KMeansOnlyAnomaly.csv",
+            mime="text/csv"
+        )
+
+        num_anomalies = data_with_anomalies_KMeans['Anomaly_KMeans'].sum()
+        total_data_points = len(data_with_anomalies_KMeans)
+        percentage_anomalies = (num_anomalies / total_data_points) * 100
+
+        st.write(f"Number of anomalies: {num_anomalies}")
+        st.write(f"Percentage of anomalies: {percentage_anomalies:.2f}%")
+
 # Run the Streamlit app
 if __name__ == "__main__":
     main()
